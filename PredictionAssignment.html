@@ -70,7 +70,7 @@ img {
 
 <div id="summary" class="section level1">
 <h1>Summary</h1>
-<p>Used a random forest model to predict the values with an estimate out-of-sample error rate of ~1.1% using cross-validation. Training set was split using a 60/40 ratio for training/crossvalidation.</p>
+<p>Used a random forest model to predict the values with an estimate out-of-sample error rate of ~0.5% using cross-validation. Training set was split using a 60/40 ratio for training/crossvalidation.</p>
 </div>
 <div id="experimentanalysis" class="section level1">
 <h1>Experiment/Analysis</h1>
@@ -212,11 +212,11 @@ table(pred_result,crossvalidation$classe)</code></pre>
 ##           C    0    4 1360   13    1
 ##           D    0    0    0 1273    2
 ##           E    0    0    0    0 1439</code></pre>
-<p>Error rate in cross validation was = 87/7846 ~ <strong>1.1%</strong> <strong>(98.9% accuracy)</strong></p>
+<p>Error rate in cross validation was = 38/7846 ~ <strong>0.5%</strong> <strong>(99.5% accuracy)</strong></p>
 </div>
 <div id="comparison-to-other-models" class="section level2">
 <h2>5.Comparison to Other models</h2>
-<p><strong>Trees with boosting</strong> Error Rate: 247/7846 ~ 3.1% (96.9% accuracy)</p>
+<p><strong>Trees with boosting</strong> Error Rate: 281/7846 ~ 3.6% (96.4% accuracy)</p>
 <pre class="r"><code>#Check if model was already cached, otherwise build model from scratch
 if(file.exists(&quot;BoostingWithTrees.rds&quot;))
 {
@@ -262,13 +262,13 @@ table(pred_result_LDA,crossvalidation$classe)</code></pre>
 </div>
 <div id="error-rate-prediction-test-results" class="section level2">
 <h2>6.Error rate prediction &amp; test results</h2>
-<p>Taking the lowest error rate from Cross validation across all models we have an estimated error rate of 1.1% or 98.9% accuracy with the random forest model.</p>
+<p>Taking the lowest error rate from Cross validation across all models we have an estimated error rate of 0.5% or 99.5% accuracy with the random forest model.</p>
 <p>Run model on test data:</p>
 <pre class="r"><code>final_result &lt;- predict(modFit_randomForest, testdata)
 final_result</code></pre>
 <pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E</code></pre>
-<p>This is predicted results with an estimated error rate of 1.1%.</p>
+<p>This is predicted results with an estimated error rate of 0.5%.</p>
 </div>
 </div>
 

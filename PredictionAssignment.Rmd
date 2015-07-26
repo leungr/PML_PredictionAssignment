@@ -7,7 +7,7 @@ output: html_document
 
 #Summary
 
-Used a random forest model to predict the values with an estimate out-of-sample error rate of ~1.1% using cross-validation. Training set was split using a 60/40 ratio for training/crossvalidation.
+Used a random forest model to predict the values with an estimate out-of-sample error rate of ~0.5% using cross-validation. Training set was split using a 60/40 ratio for training/crossvalidation.
 
 #Experiment/Analysis
 
@@ -123,10 +123,10 @@ pred_result <- predict(modFit_randomForest, crossvalidation)
 table(pred_result,crossvalidation$classe)
 ```
 
-Error rate in cross validation was = 87/7846 ~ **1.1%**  **(98.9% accuracy)**  
+Error rate in cross validation was = 38/7846 ~ **0.5%**  **(99.5% accuracy)**  
 
 ##5.Comparison to Other models
-**Trees with boosting** Error Rate: 247/7846 ~ 3.1% (96.9% accuracy)
+**Trees with boosting** Error Rate: 281/7846 ~ 3.6% (96.4% accuracy)
 ```{r, message = FALSE}
 #Check if model was already cached, otherwise build model from scratch
 if(file.exists("BoostingWithTrees.rds"))
@@ -165,7 +165,7 @@ table(pred_result_LDA,crossvalidation$classe)
 
 ##6.Error rate prediction & test results
 
-Taking the lowest error rate from Cross validation across all models we have an estimated error rate of 1.1% or 98.9% accuracy with the random forest model.
+Taking the lowest error rate from Cross validation across all models we have an estimated error rate of 0.5% or 99.5% accuracy with the random forest model.
 
 Run model on test data:
 ```{r}
@@ -173,4 +173,4 @@ final_result <- predict(modFit_randomForest, testdata)
 final_result
 ```
 
-This is predicted results with an estimated error rate of 1.1%.
+This is predicted results with an estimated error rate of 0.5%.
