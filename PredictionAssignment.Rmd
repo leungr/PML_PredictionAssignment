@@ -1,0 +1,176 @@
+---
+title: "PredictionAssignment"
+author: "Ricky Leung"
+date: "July 25, 2015"
+output: html_document
+---
+
+#Summary
+
+Used a random forest model to predict the values with an estimate out-of-sample error rate of ~1.1% using cross-validation. Training set was split using a 60/40 ratio for training/crossvalidation.
+
+#Experiment/Analysis
+
+Sections:
+
+1. Exploratory Analysis
+2. Filtering/dimension reduction
+3. Training Model
+4. Cross validation result
+5. Comparison with other models
+6. Error rate prediction & test results
+
+##1. Exploratory Analysis
+I viewed the CSV files in Excel and noticed the following things:
+
+* Some columns had sparse data. 
+    + They had data only when IsNewWindow = "yes" 
+* Some  values were blank, "NA" or #DIV/0!"
+
+Actionable items  
+* Columns with sparse data will be useless as a predictor since they don't have much information for majority of the rows  
+* When loading the CSV files make sure to map "#DIV/0!" to NA values. 
+
+Code sample of filtering for #DIV/0! values
+```{r}
+#CSV files are assumed to be in the same working directory as this R file. Note that #DIV/0! entries are set to N/A
+csvdata <- read.csv("pml-training.csv",header=TRUE, sep=",", na.strings=c("NA","#DIV/0!"), dec=".", strip.white=TRUE, stringsAsFactors=FALSE)
+testdata <- read.csv("pml-testing.csv",header=TRUE, sep=",", na.strings=c("NA","#DIV/0!"), dec=".", strip.white=TRUE, stringsAsFactors=FALSE)
+
+```
+
+##2. Filtering/dimension reduction
+
+The predictors for the training data was reduced to 52 variables. Most of the reduction falls in two parts:  
+
+### A.Remove summary columns of data where >50% of the data is NA.
+
+As noted in the previous section, columns with sparse data will be useless as a predictor since they don't have much information for majority of the rows
+
+Code snippet (Referenced from Discussions forums - Community TA Patricia Ellen Tressel gave code sample here https://class.coursera.org/predmachlearn-030/forum/thread?thread_id=54#post-383):
+```{r}
+csvdata.nrow <- nrow(csvdata)
+# Run apply on the training set.  Dimension 2 means call the function on each column.
+col_is_bad <- apply(csvdata, 2, function(col) {
+    # You'll get the entire column contents as a vector here, in the col parameter.
+    # Put your "is this column no good" test here.
+    sum(is.na(col)) / csvdata.nrow > 0.5  # Is this column more than half NA?
+})
+csvdata[col_is_bad] <- list(NULL)
+```
+
+### B.Remove the the following columns of data that are inapplicable to the experiment
+
+* **X** - Row number is not useful predictor 
+* **user_name** - This might lead to overfitting the model against a particular name. Test data could have both new user_name or another person with the same name as the training set which could make the model less accurate.
+* **timestamp data** - Also useless for prediction as model should not be dependent on the time the exercise was taken.
+* **window data ** - Useless for the prediction as model should not depend on which window or set the exercise was taken as test data could be sampled from any instance within a window.  
+```{r}
+more_bad_cols <- c("X", "user_name",  "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", "new_window", "num_window")
+csvdata[more_bad_cols] <- list(NULL)
+```
+
+After filtering the training data was reduced to 52 predictors + 1 output
+```{r}
+names(csvdata)
+```
+##3. Training Model
+Partitioned training data into a test set and cross-validation set (60/40 split) and used random forest model to train data across the 52 predictors.
+
+```{r, message=FALSE}
+### Parition training data into training and cross validation set ###
+
+#Convert the output class columns to appropriate factor type
+csvdata$classe <- as.factor(csvdata$classe)
+
+#Do a 60/40 split for training/cross validation
+library(caret)
+set.seed(3000)
+inTrain <- createDataPartition(y=csvdata$classe, p=0.6, list= FALSE)
+training <- csvdata[inTrain,]
+crossvalidation <- csvdata[-inTrain,]
+```
+Training:`r nrow(training)` rows  
+Cross Validation:`r nrow(crossvalidation)` rows  
+
+Fit the model to a random forest with the 52 predictors
+```{r}
+#Check if model was already cached, otherwise build model from scratch
+
+if(file.exists("RandomForest_52.rds"))
+{
+	modFit_randomForest= readRDS("RandomForest_52.rds")
+} else
+{
+	set.seed(3000)
+ 	modFit_randomForest <- train(classe ~., data=training, method="rf", proxy = TRUE)
+	#save into rds for easier caching
+	saveRDS(modFit_randomForest, file="RandomForest_52.rds")
+}
+
+modFit_randomForest
+```
+
+Model with boostraping: Accuracy of 98.6% or error rate of about 1.4%. But we should use cross-validation to see what a real estimate of out-of-sample error is.
+
+##4.Cross Validation Result
+**Random Forest**
+```{r, message=FALSE}
+#predict values for cross validation
+pred_result <- predict(modFit_randomForest, crossvalidation)
+
+#confusion matrix for cross validation
+table(pred_result,crossvalidation$classe)
+```
+
+Error rate in cross validation was = 87/7846 ~ **1.1%**  **(98.9% accuracy)**  
+
+##5.Comparison to Other models
+**Tress with boosting** Error Rate: 247/7846 ~ 3.1% (96.9% accuracy)
+```{r, message = FALSE}
+#Check if model was already cached, otherwise build model from scratch
+if(file.exists("BoostingWithTrees.rds"))
+{
+	modFit_BoostingwithTrees= readRDS("BoostingWithTrees.rds")
+} else
+{
+	set.seed(3000)
+ 	modFit_BoostingwithTrees <- train(classe ~., data=training, method="gbm", verbose=FALSE)
+	#save into rds for easier caching
+	saveRDS(modFit_BoostingwithTrees, file="BoostingWithTrees.rds")
+}
+pred_result_boosting <- predict(modFit_BoostingwithTrees, crossvalidation)
+table(pred_result_boosting,crossvalidation$classe)
+```
+
+
+**LDA model** Error Rate: 2340/7846 ~ 29.8% (70.2% accuracy)
+```{r, message = FALSE}
+#Check if model was already cached, otherwise build model from scratch
+if(file.exists("LDAModel.rds"))
+{
+	modFit_LDAModel= readRDS("LDAModel.rds")
+} else
+{
+	set.seed(3000)
+ 	modFit_LDAModel <- train(classe ~., data=training, method="lda")
+	#save into rds for easier caching
+	saveRDS(modFit_BoostingwithTrees, file="LDAModel.rds")
+}
+pred_result_LDA <- predict(modFit_LDAModel, crossvalidation)
+table(pred_result_LDA,crossvalidation$classe)
+```
+
+**Conclusion:** Choose random forest model as it has the lowest cross-validation error rate.
+
+##6.Error rate prediction & test results
+
+Taking the lowest error rate from Cross validation across all models we have an estimated error rate of 1.1% or 98.9% accuracy with the random forest model.
+
+Run model on test data:
+```{r}
+final_result <- predict(modFit_randomForest, testdata)
+final_result
+```
+
+This is predicted results with an estimated error rate of 1.1%.
