@@ -1,5 +1,5 @@
 ---
-title: "PredictionAssignment"
+title: "Prediction Assignment"
 author: "Ricky Leung"
 date: "July 25, 2015"
 output: html_document
@@ -126,7 +126,7 @@ table(pred_result,crossvalidation$classe)
 Error rate in cross validation was = 87/7846 ~ **1.1%**  **(98.9% accuracy)**  
 
 ##5.Comparison to Other models
-**Tress with boosting** Error Rate: 247/7846 ~ 3.1% (96.9% accuracy)
+**Trees with boosting** Error Rate: 247/7846 ~ 3.1% (96.9% accuracy)
 ```{r, message = FALSE}
 #Check if model was already cached, otherwise build model from scratch
 if(file.exists("BoostingWithTrees.rds"))
@@ -144,7 +144,7 @@ table(pred_result_boosting,crossvalidation$classe)
 ```
 
 
-**LDA model** Error Rate: 2340/7846 ~ 29.8% (70.2% accuracy)
+**Linear Discriminant Analysis (LDA) model** Error Rate: 2340/7846 ~ 29.8% (70.2% accuracy)
 ```{r, message = FALSE}
 #Check if model was already cached, otherwise build model from scratch
 if(file.exists("LDAModel.rds"))
